@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi App de Rutinas</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f6f8; color: #333; padding: 20px; text-align: center; }
+    .card { background: white; max-width: 400px; margin: 20px auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+    button { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    .hidden { display: none; }
+    .exercise-card { background: #f9f9f9; border: 1px solid #e0e0e0; margin: 15px 0; padding: 15px; border-radius: 8px; text-align: left; }
+    .exercise-card img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; margin-top: 10px; }
+    .logout-btn { background-color: #dc3545; margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+  <!-- PANTALLA DE LOGIN -->
+  <div id="login-screen" class="card">
+    <h2>Iniciar Sesión</h2>
+    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Ingresa tus credenciales para acceder a tus rutinas</p>
+    <input type="text" id="username" placeholder="Usuario (ej: cristian)">
+    <input type="password" id="password" placeholder="Contraseña (ej: 1234)">
+    <button onclick="login()">Ingresar</button>
+    <p id="login-error" style="color: red; display: none; font-size: 14px; margin-top: 5px;">Usuario o contraseña incorrectos</p>
+  </div>
+
+  <!-- PANTALLA PRINCIPAL DE RUTINAS -->
+  <div id="app-screen" class="card hidden">
+    <h2>Mi Rutina Diaria</h2>
+    <p id="welcome-msg" style="margin-bottom: 15px; color: #555;"></p>
+
+    <label for="objetivo" style="font-weight: bold;">Selecciona tu Objetivo:</label>
+    <select id="objetivo" onchange="mostrarRutina()">
+      <option value="fuerza">Fuerza / Masa Muscular</option>
+      <option value="perder_peso">Definición / Pérdida de Peso</option>
+      <option value="resistencia">Resistencia Cardio</option>
+    </select>
+
+    <div id="exercise-list" style="margin-top: 20px;"></div>
+
+    <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+  </div>
+
+  <script>
+    // Base de datos de ejercicios con imágenes/animaciones de demostración
+    const ejerciciosDB = [
+      {
+        nombre: "Sentadillas libres",
+        objetivo: "fuerza",
+        series: 4,
+        repeticiones: "10 a 12",
+        imagen: "https://media.giphy.com/media/3o7TKSx0g7a90fL8k0/giphy.gif"
+      },
+      {
+        nombre: "Flexiones de pecho",
+        objetivo: "fuerza",
+        series: 4,
+        repeticiones: "12 a 15",
+        imagen: "https://media.giphy.com/media/l3T5P1iR8A3U2fC1q/giphy.gif"
+      },
+      {
+        nombre: "Burpees",
+        objetivo: "perder_peso",
+        series: 3,
+        repeticiones: "15",
+        imagen: "https://media.giphy.com/media/26bgQ8FfKxPsn0o4U/giphy.gif"
+      },
+      {
+        nombre: "Zancadas / Stride",
+        objetivo: "perder_peso",
+        series: 4,
+        repeticiones: "12 por pierna",
+        imagen: "https://media.giphy.com/media/3o6Zt3A072K7Z0L5Yk/giphy.gif"
+      },
+      {
+        nombre: "Plancha abdominal",
+        objetivo: "resistencia",
+        series: 3,
+        repeticiones: "45 segundos",
+        imagen: "https://media.giphy.com/media/l41K3o5TksFi5fD8I/giphy.gif"
+      }
+    ];
+
+    // Verificar si ya inició sesión previamente
+    window.onload = function() {
+      const user = localStorage.getItem("usuario_activo");
+      if (user) {
+        mostrarApp(user);
+      }
+    };
+
+    function login() {
+      const userVal = document.getElementById("username").value.trim();
+      const passVal = document.getElementById("password").value.trim();
+
+      // Validación simple para demostración
+      if (userVal !== "" && passVal === "1234") {
+        localStorage.setItem("usuario_activo", userVal);
+        document.getElementById("login-error").style.display = "none";
+        mostrarApp(userVal);
+      } else {
+        document.getElementById("login-error").style.display = "block";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("usuario_activo");
+      document.getElementById("app-screen").classList.add("hidden");
+      document.getElementById("login-screen").classList.remove("hidden");
+    }
+
+    function mostrarApp(usuario) {
+      document.getElementById("login-screen").classList.add("hidden");
+      document.getElementById("app-screen").classList.remove("hidden");
+      document.getElementById("welcome-msg").innerText = "¡Hola, " + usuario + "! Elige tu rutina para hoy.";
+      mostrarRutina();
+    }
+
+    function mostrarRutina() {
+      const objetivo = document.getElementById("objetivo").value;
+      const listContainer = document.getElementById("exercise-list");
+      listContainer.innerHTML = "";
+
+      const filtrados = ejerciciosDB.filter(e => e.objetivo === objetivo);
+
+      if (filtrados.length === 0) {
+        listContainer.innerHTML = "<p>No hay ejercicios cargados para este objetivo.</p>";
+        return;
+      }
+
+      filtrados.forEach(ej => {
+        const item = document.createElement("div");
+        item.className = "exercise-card";
+        item.innerHTML = `
+          <h3>${ej.nombre}</h3>
+          <p><strong>Series:</strong> ${ej.series}</p>
+          <p><strong>Repeticiones:</strong> ${ej.repeticiones}</p>
+          <img src="${ej.imagen}" alt="${ej.nombre}" alt="Animación del ejercicio">
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+  </script>
+</body>
+</html>
